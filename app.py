@@ -46,7 +46,14 @@ _stanza_nlp = None
 def get_spacy():
     global _spacy_nlp
     if _spacy_nlp is None:
-        _spacy_nlp = spacy.load("en_core_web_trf")
+        try:
+            _spacy_nlp = spacy.load("en_core_web_sm")
+        except OSError:
+            import subprocess, sys
+            subprocess.run([
+                sys.executable, "-m", "spacy", "download", "en_core_web_sm"
+            ], check=True)
+            _spacy_nlp = spacy.load("en_core_web_sm")
     return _spacy_nlp
 
 def get_stanza():
