@@ -136,19 +136,23 @@ def make_bar_chart(
 def analyze(
     file_obj,
     library: str,
-    entity_type_1: str,
-    entity_type_2: str,
+    entity_filter: List[str],
     top_n: int,
     show_table: bool,
 ):
     # ── Input validation ──────────────────────────────────────────────────────
     if file_obj is None:
         return (
-            None,
-            None,
-            None,
+            None, None, None,
             gr.update(visible=False),
             "⚠️ Please upload a .txt file.",
+        )
+
+    if not entity_filter:
+        return (
+            None, None, None,
+            gr.update(visible=False),
+            "⚠️ Please select at least one entity type.",
         )
 
     # Read file
@@ -160,12 +164,6 @@ def analyze(
 
     if not text.strip():
         return None, None, None, gr.update(visible=False), "⚠️ The uploaded file is empty."
-
-    # Resolve entity filter
-    entity_filter = [entity_type_1]
-    if entity_type_2 != "None (single entity)":
-        entity_filter.append(entity_type_2)
-    entity_filter = list(dict.fromkeys(entity_filter))  # deduplicate, preserve order
 
     top_n = int(top_n)
 
@@ -184,7 +182,6 @@ def analyze(
         )
 
     # ── Build counters ────────────────────────────────────────────────────────
-    # keyed by (surface_text, mapped_label)
     counter: Counter = Counter()
     label_counter: Counter = Counter()
     for surface, label, _ in raw:
@@ -198,7 +195,7 @@ def analyze(
         f"{len(label_counter)} label(s)."
     )
 
-    # ── Chart 1: label distribution (always shown) ───────────────────────────
+    # ── Chart 1: label distribution (all labels, always shown) ───────────────
     fig1, ax1 = plt.subplots(figsize=(7, 4))
     lab_names  = list(label_counter.keys())
     lab_counts = list(label_counter.values())
@@ -213,19 +210,64 @@ def analyze(
                  ha="center", va="bottom", fontsize=9)
     fig1.tight_layout()
 
-    # ── Chart 2: top-N surface forms for chosen entity type(s) ───────────────
-    chart_title = (
-        f"{library} — Top {top_n} '{' & '.join(entity_filter)}' Mentions"
-    )
-    fig2 = make_bar_chart(counter, chart_title, top_n, entity_filter, library)
+    # ── Chart 2: one subplot per selected entity type ─────────────────────────
+    # Palette — one distinct colour per WNUT label
+    LABEL_COLORS = {
+        "person":        "#4C72B0",
+        "location":      "#DD8452",
+        "corporation":   "#55A868",
+        "product":       "#C44E52",
+        "creative-work": "#8172B2",
+        "group":         "#937860",
+    }
 
-    # ── Table (all entities matching filter, sorted by count) ────────────────
+    n_selected = len(entity_filter)
+    fig2, axes = plt.subplots(
+        n_selected, 1,
+        figsize=(10, 4.5 * n_selected),
+        squeeze=False,
+    )
+
+    for row_idx, label in enumerate(entity_filter):
+        ax = axes[row_idx][0]
+
+        # Get top-N surface forms for this label only
+        label_entries = {
+            text: cnt
+            for (text, lbl), cnt in counter.items()
+            if lbl == label
+        }
+
+        if not label_entries:
+            ax.text(0.5, 0.5, f"No '{label}' entities found.",
+                    ha="center", va="center", transform=ax.transAxes, fontsize=12)
+            ax.set_title(f"Top {top_n} — {label}", fontweight="bold")
+            ax.axis("off")
+            continue
+
+        top_items = sorted(label_entries.items(), key=lambda x: -x[1])[:top_n]
+        x_labels, counts = zip(*top_items)
+        bar_color = LABEL_COLORS.get(label, "#333333")
+
+        bars = ax.bar(range(len(x_labels)), counts, color=bar_color)
+        ax.set_xticks(range(len(x_labels)))
+        ax.set_xticklabels(x_labels, rotation=35, ha="right", fontsize=9)
+        ax.set_ylabel("Count")
+        ax.set_title(f"Top {top_n} '{label}' mentions — {library}", fontweight="bold")
+        for bar, cnt in zip(bars, counts):
+            ax.text(bar.get_x() + bar.get_width() / 2,
+                    bar.get_height() + 0.1, str(cnt),
+                    ha="center", va="bottom", fontsize=8)
+
+    fig2.tight_layout(pad=3.0)
+
+    # ── Table (all entities matching selected filters) ────────────────────────
     table_data = [
         {"Entity": text, "Type": label, "Count": cnt}
         for (text, label), cnt in counter.items()
         if label in entity_filter
     ]
-    table_data.sort(key=lambda x: -x["Count"])
+    table_data.sort(key=lambda x: (-x["Count"], x["Type"]))
     df = pd.DataFrame(table_data) if table_data else pd.DataFrame(
         columns=["Entity", "Type", "Count"]
     )
@@ -237,8 +279,6 @@ def analyze(
 
 # ── Gradio UI ─────────────────────────────────────────────────────────────────
 
-LABEL_CHOICES = WNUT_LABELS
-LABEL_CHOICES_WITH_NONE = ["None (single entity)"] + WNUT_LABELS
 
 with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) as demo:
 
@@ -263,15 +303,10 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
                 value="spaCy",
                 label="NER Library",
             )
-            entity_1 = gr.Dropdown(
-                choices=LABEL_CHOICES,
-                value="person",
-                label="Entity type (required)",
-            )
-            entity_2 = gr.Dropdown(
-                choices=LABEL_CHOICES_WITH_NONE,
-                value="None (single entity)",
-                label="Second entity type (optional)",
+            entity_select = gr.CheckboxGroup(
+                choices=WNUT_LABELS,
+                value=["person"],
+                label="Select entity types to analyse (pick one or more)",
             )
             top_n_slider = gr.Slider(
                 minimum=1, maximum=25, step=1, value=10,
@@ -298,8 +333,7 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
         inputs=[
             file_input,
             library_radio,
-            entity_1,
-            entity_2,
+            entity_select,
             top_n_slider,
             show_table_chk,
         ],
