@@ -1,0 +1,6 @@
+gradio>=4.0.0
+spacy==3.7.2
+en-core-web-trf @ https://github.com/explosion/spacy-models/releases/download/en_core_web_trf-3.7.3/en_core_web_trf-3.7.3-py3-none-any.whl
+stanza>=1.9.0
+matplotlib>=3.7.0
+pandas>=2.0.0
