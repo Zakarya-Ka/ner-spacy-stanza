@@ -1,5 +1,7 @@
 """
 NER Analysis Space — spaCy & Stanza on user-uploaded .txt files
+Based on methodology from: Kaouch (2025), "A Comparative Analysis of
+Off-the-Shelf NER Libraries on Noisy Text"
 """
 
 import gradio as gr
@@ -615,6 +617,16 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
     ---
     **Graph styles:** Bar Chart · Horizontal Bar · Pie Chart · Dot Plot · Stacked Bar
 
+    **Entity label mapping** (library-native → WNUT'17 taxonomy):
 
+    | Library label | WNUT label |
+    |---|---|
+    | PERSON | person |
+    | ORG | corporation |
+    | GPE / LOC | location |
+    | NORP | group |
+    | PRODUCT | product |
+    | WORK_OF_ART | creative-work |
+    """)
 
 demo.launch()
