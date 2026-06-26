@@ -596,15 +596,15 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
 
             top_n_slider = gr.Slider(
                 minimum=1, maximum=25, step=1, value=10,
-                label="Top N entities in chart (max 25)",
+                label="Top entities in chart",
             )
-            show_table_chk = gr.Checkbox(value=False, label="Show & download results table")
+            show_table_chk = gr.Checkbox(value=False, label="Show all results in table format bellow")
             run_btn = gr.Button("▶ Run Analysis", variant="primary")
 
         with gr.Column(scale=2):
             status_box    = gr.Markdown("Upload file(s) and click **Run Analysis**.")
             chart_dist    = gr.Plot(label="Entity Type Distribution")
-            chart_topn    = gr.Plot(label="Top-N Entity Mentions")
+            chart_topn    = gr.Plot(label="Top Entity Mentions")
             results_table = gr.Dataframe(label="Results Table", visible=False, wrap=True)
             download_btn  = gr.File(label="⬇ Download results as CSV", visible=False)
 
