@@ -564,9 +564,8 @@ def select_all_entities():
 with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) as demo:
 
     gr.Markdown("""
-    # 🔍 NER Analysis — spaCy & Stanza
-    Upload one or more `.txt` files and explore Named Entity Recognition results.
-    > Based on *Kaouch (2025) — A Comparative Analysis of Off-the-Shelf NER Libraries on Noisy Text*.
+    # NER Analysis — spaCy & Stanza
+    Upload one or more `.txt` files and analyze Named Entity Recognition.
     """)
 
     with gr.Row():
