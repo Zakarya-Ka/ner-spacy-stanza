@@ -287,8 +287,6 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
     Upload a plain-text `.txt` file and explore Named Entity Recognition results
     using **spaCy** (`en_core_web_trf`) or **Stanza** (`en` NER pipeline).
 
-    > Based on the methodology of *Kaouch (2025) — A Comparative Analysis of
-    > Off-the-Shelf NER Libraries on Noisy Text*.
     """)
 
     with gr.Row():
