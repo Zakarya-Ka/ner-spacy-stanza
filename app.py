@@ -570,7 +570,6 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
                 file_types=[".txt"],
                 type="filepath",
                 file_count="multiple",
-                height=100,
             )
             library_radio = gr.Radio(
                 choices=["spaCy", "Stanza", "Both (Comparison)"],
@@ -613,20 +612,6 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
         outputs=[chart_dist, chart_topn, results_table, download_btn, status_box],
     )
 
-    gr.Markdown("""
-    ---
-    **Graph styles:** Bar Chart · Horizontal Bar · Pie Chart · Dot Plot · Stacked Bar
-
-    **Entity label mapping** (library-native → WNUT'17 taxonomy):
-
-    | Library label | WNUT label |
-    |---|---|
-    | PERSON | person |
-    | ORG | corporation |
-    | GPE / LOC | location |
-    | NORP | group |
-    | PRODUCT | product |
-    | WORK_OF_ART | creative-work |
-    """)
+        gr.Markdown("---")
 
 demo.launch()
