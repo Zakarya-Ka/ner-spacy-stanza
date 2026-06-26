@@ -110,7 +110,7 @@ def save_csv(df: pd.DataFrame) -> str:
     tmp.close()
     return tmp.name
 
-# ── Chart: distribution (Chart 1) ────────────────────────────────────────────
+# ── Chart: distribution (Chart 1) ─────────────────────────────────────────────
 
 def make_distribution_chart(label_counter: Counter, library: str, style: str) -> plt.Figure:
     names  = [l for l in WNUT_LABELS if l in label_counter]
@@ -165,7 +165,7 @@ def make_distribution_chart(label_counter: Counter, library: str, style: str) ->
         ax.set_facecolor("#f5f5f5")
         ax.yaxis.set_visible(False)
 
-    else:  # default Bar Chart
+    else:  # Bar Chart
         bars = ax.bar(names, counts, color=colors)
         ax.set_ylabel("Count")
         ax.set_facecolor("#f9f9f9")
@@ -180,7 +180,7 @@ def make_distribution_chart(label_counter: Counter, library: str, style: str) ->
     fig.tight_layout()
     return fig
 
-# ── Chart: top-N per entity (Chart 2) ────────────────────────────────────────
+# ── Chart: top-N per entity (Chart 2) ─────────────────────────────────────────
 
 def make_topn_chart(counter: Counter, entity_filter: List[str],
                     top_n: int, library: str, style: str) -> plt.Figure:
@@ -268,9 +268,9 @@ def make_topn_chart(counter: Counter, entity_filter: List[str],
 # ── Comparison charts ─────────────────────────────────────────────────────────
 
 def make_comparison_dist_chart(lc_spacy: Counter, lc_stanza: Counter, style: str) -> plt.Figure:
-    names   = WNUT_LABELS
-    s_vals  = [lc_spacy.get(l, 0)  for l in names]
-    t_vals  = [lc_stanza.get(l, 0) for l in names]
+    names  = WNUT_LABELS
+    s_vals = [lc_spacy.get(l, 0)  for l in names]
+    t_vals = [lc_stanza.get(l, 0) for l in names]
 
     if style == "Pie Chart":
         fig, (ax1, ax2) = plt.subplots(1, 2, figsize=(12, 5))
@@ -282,20 +282,20 @@ def make_comparison_dist_chart(lc_spacy: Counter, lc_stanza: Counter, style: str
                 ax.pie(vs, labels=ns, colors=cs, autopct="%1.1f%%", startangle=140,
                        wedgeprops=dict(edgecolor="white", linewidth=1.5))
             ax.set_title(f"{lib} — Distribution", fontweight="bold")
-        fig.suptitle("spaCy vs Stanza — Entity Type Distribution", fontweight="bold", y=1.02)
+        fig.suptitle("spaCy vs Stanza — Entity Type Distribution", fontweight="bold")
         fig.tight_layout()
         return fig
 
     if style == "Stacked Bar":
         fig, ax = plt.subplots(figsize=(9, 4))
         colors = [LABEL_COLORS[l] for l in names]
-        for lib_vals, lib_name, y_pos in [(s_vals, "spaCy", 1), (t_vals, "Stanza", 0)]:
+        for lib_vals, lib_name in [(s_vals, "spaCy"), (t_vals, "Stanza")]:
             left = 0
             for name, cnt, col in zip(names, lib_vals, colors):
                 ax.barh([lib_name], [cnt], left=left, color=col,
                         edgecolor="white", linewidth=1.2)
                 if cnt > 0:
-                    ax.text(left + cnt / 2, y_pos - 1,
+                    ax.text(left + cnt / 2, lib_name,
                             f"{name}\n{cnt}", ha="center", va="center",
                             fontsize=7, color="white", fontweight="bold")
                 left += cnt
@@ -336,7 +336,7 @@ def make_comparison_dist_chart(lc_spacy: Counter, lc_stanza: Counter, style: str
         ax.xaxis.grid(True, linestyle=":", alpha=0.6)
         ax.legend()
 
-    else:  # Bar Chart (default)
+    else:  # Bar Chart
         b1 = ax.bar(x - w/2, s_vals, w, label="spaCy",  color="#4C72B0")
         b2 = ax.bar(x + w/2, t_vals, w, label="Stanza", color="#DD8452")
         ax.set_xticks(x)
@@ -381,18 +381,24 @@ def make_comparison_topn_chart(c_spacy: Counter, c_stanza: Counter,
         w  = 0.35
 
         if style == "Pie Chart":
-            fig2, (pa1, pa2) = plt.subplots(1, 2, figsize=(12, 4))
             pie_colors = [plt.cm.tab20(j / max(len(combined),1)) for j in range(len(combined))]
-            for pa, vals, lib in [(pa1, sv, "spaCy"), (pa2, tv, "Stanza")]:
-                non_zero = [(k, v, c) for k, v, c in zip(combined, vals, pie_colors) if v > 0]
-                if non_zero:
-                    ks, vs, cs = zip(*non_zero)
-                    pa.pie(vs, labels=ks, colors=cs, autopct="%1.1f%%", startangle=140,
-                           wedgeprops=dict(edgecolor="white"))
-                pa.set_title(f"{lib} — '{label}'", fontweight="bold")
-            axes[i][0].axis("off")
-            axes[i][0].set_title(f"Top {top_n} '{label}' — see side-by-side pies above",
-                                  fontsize=9, color="gray")
+            non_zero_s = [(k, v, c) for k, v, c in zip(combined, sv, pie_colors) if v > 0]
+            non_zero_t = [(k, v, c) for k, v, c in zip(combined, tv, pie_colors) if v > 0]
+            if non_zero_s or non_zero_t:
+                ax.axis("off")
+                ax.set_title(f"Top {top_n} '{label}' — spaCy vs Stanza (Pie)", fontweight="bold")
+                if non_zero_s:
+                    ks, vs, cs = zip(*non_zero_s)
+                    inset1 = fig.add_axes([0.05, 0.1 + (n-1-i)/n * 0.9,  0.4, 0.8/n])
+                    inset1.pie(vs, labels=ks, colors=cs, autopct="%1.0f%%",
+                               wedgeprops=dict(edgecolor="white"))
+                    inset1.set_title("spaCy", fontsize=8)
+                if non_zero_t:
+                    ks, vs, cs = zip(*non_zero_t)
+                    inset2 = fig.add_axes([0.55, 0.1 + (n-1-i)/n * 0.9, 0.4, 0.8/n])
+                    inset2.pie(vs, labels=ks, colors=cs, autopct="%1.0f%%",
+                               wedgeprops=dict(edgecolor="white"))
+                    inset2.set_title("Stanza", fontsize=8)
             continue
 
         elif style == "Horizontal Bar":
@@ -428,10 +434,10 @@ def make_comparison_topn_chart(c_spacy: Counter, c_stanza: Counter,
                 ax.barh(["spaCy"],  [s], left=s_left, color=col, edgecolor="white")
                 ax.barh(["Stanza"], [t], left=t_left, color=col, edgecolor="white")
                 if s > 0:
-                    ax.text(s_left + s/2, 1, f"{k}\n{s}",
+                    ax.text(s_left + s/2, "spaCy",  f"{k}\n{s}",
                             ha="center", va="center", fontsize=6, color="white")
                 if t > 0:
-                    ax.text(t_left + t/2, 0, f"{k}\n{t}",
+                    ax.text(t_left + t/2, "Stanza", f"{k}\n{t}",
                             ha="center", va="center", fontsize=6, color="white")
                 s_left += s
                 t_left += t
@@ -611,7 +617,5 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
                 top_n_slider, show_table_chk, graph_style],
         outputs=[chart_dist, chart_topn, results_table, download_btn, status_box],
     )
-
-        gr.Markdown("---")
 
 demo.launch()
