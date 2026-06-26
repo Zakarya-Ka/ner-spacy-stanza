@@ -571,7 +571,7 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
     with gr.Row():
         with gr.Column(scale=1):
             file_input = gr.File(
-                label="📄 Upload .txt file(s) — drag multiple files at once",
+                label="📄 Upload .txt file(s) — drag file(s)",
                 file_types=[".txt"],
                 type="filepath",
                 file_count="multiple",
