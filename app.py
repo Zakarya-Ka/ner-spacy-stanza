@@ -295,7 +295,6 @@ with gr.Blocks(title="NER Analysis — spaCy & Stanza", theme=gr.themes.Soft()) 
                 label="📄 Upload .txt file",
                 file_types=[".txt"],
                 type="filepath",
-                height=100,
             )
             library_radio = gr.Radio(
                 choices=["spaCy", "Stanza"],
